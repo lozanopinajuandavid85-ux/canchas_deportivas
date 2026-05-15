@@ -1,0 +1,111 @@
+// ============================================================
+// Prisma Schema — Sistema de Gestión de Canchas Deportivas
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================
+// ENTIDAD: Deporte
+// ============================================================
+model Deporte {
+  id          Int      @id @default(autoincrement())
+  nombre      String   @unique
+  descripcion String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  canchas Cancha[]
+
+  @@map("deportes")
+}
+
+// ============================================================
+// ENTIDAD: Cancha
+// ============================================================
+model Cancha {
+  id          Int      @id @default(autoincrement())
+  nombre      String
+  descripcion String?
+  ubicacion   String
+  capacidad   Int
+  estado      Boolean  @default(true)
+  deporteId   Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  deporte  Deporte   @relation(fields: [deporteId], references: [id])
+  horarios Horario[]
+
+  @@map("canchas")
+}
+
+// ============================================================
+// ENTIDAD: Horario
+// ============================================================
+model Horario {
+  id         Int      @id @default(autoincrement())
+  canchaId   Int
+  diaSemana  String // "Lunes", "Martes", etc.
+  horaInicio String // "08:00"
+  horaFin    String // "09:00"
+  disponible Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  cancha   Cancha    @relation(fields: [canchaId], references: [id])
+  reservas Reserva[]
+
+  @@map("horarios")
+}
+
+// ============================================================
+// ENTIDAD: Visitante
+// ============================================================
+model Visitante {
+  id        Int      @id @default(autoincrement())
+  nombres   String
+  apellidos String
+  correo    String   @unique
+  telefono  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reservas Reserva[]
+
+  @@map("visitantes")
+}
+
+// ============================================================
+// ENTIDAD: Reserva
+// ============================================================
+model Reserva {
+  id            Int           @id @default(autoincrement())
+  codigoReserva String        @unique
+  visitanteId   Int
+  horarioId     Int
+  fecha         DateTime
+  estado        EstadoReserva @default(ACTIVA)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  visitante Visitante @relation(fields: [visitanteId], references: [id])
+  horario   Horario   @relation(fields: [horarioId], references: [id])
+
+  @@map("reservas")
+}
+
+// ============================================================
+// ENUM: EstadoReserva
+// ============================================================
+enum EstadoReserva {
+  ACTIVA
+  CANCELADA
+  ELIMINADA
+}
